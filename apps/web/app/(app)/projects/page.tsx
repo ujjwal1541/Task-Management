@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { PRIORITIES, type Project } from '@/lib/types';
@@ -113,16 +113,18 @@ function Row({
 }) {
   const [open, setOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
+  const priorityBtnRef = useRef<HTMLButtonElement>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_40px] items-center gap-2 border-t px-4 py-3 text-sm md:grid-cols-[minmax(0,1fr)_120px_130px_110px_140px_60px]">
       <span className="truncate font-medium">{project.name}</span>
       <span className="hidden text-[13px] text-muted-foreground md:block">{project._count?.tasks ?? 0} tasks</span>
       <div className={`relative hidden md:block ${fields.priority ? '' : 'md:invisible'}`}>
-        <button onClick={() => setPriorityOpen((v) => !v)} className="rounded-md px-1 py-0.5 hover:bg-muted">
+        <button ref={priorityBtnRef} onClick={() => setPriorityOpen((v) => !v)} className="rounded-md px-1 py-0.5 hover:bg-muted">
           <PriorityBadge priority={project.priority} />
         </button>
-        <Popover open={priorityOpen} onClose={() => setPriorityOpen(false)} className="left-0 right-auto">
+        <Popover open={priorityOpen} onClose={() => setPriorityOpen(false)} anchorRef={priorityBtnRef} align="left">
           {PRIORITIES.map((priority) => (
             <MenuItem key={priority} onClick={async () => { setPriorityOpen(false); await onUpdate({ priority }); }}>
               <PriorityBadge priority={priority} />
@@ -137,10 +139,10 @@ function Row({
         {formatDate(project.dueDate)}
       </span>
       <div className="relative justify-self-end">
-        <button onClick={() => setOpen((v) => !v)} className="rounded-md p-1.5 hover:bg-muted" aria-label="Project actions">
+        <button ref={menuBtnRef} onClick={() => setOpen((v) => !v)} className="rounded-md p-1.5 hover:bg-muted" aria-label="Project actions">
           <MoreHorizontal className="h-4 w-4" />
         </button>
-        <Popover open={open} onClose={() => setOpen(false)}>
+        <Popover open={open} onClose={() => setOpen(false)} anchorRef={menuBtnRef}>
           <MenuItem className="text-red-500" onClick={async () => { setOpen(false); await onDelete(); }}>
             <Trash2 className="h-4 w-4" /> Delete project
           </MenuItem>
