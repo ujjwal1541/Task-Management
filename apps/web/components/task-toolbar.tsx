@@ -53,9 +53,9 @@ export function TaskToolbar({
   const [searchOpen, setSearchOpen] = useState(false);
   const [fieldsOpen, setFieldsOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
-  const fieldsAnchorRef = useRef<HTMLDivElement>(null);
-  const filterAnchorRef = useRef<HTMLDivElement>(null);
   const activeFilters = Object.values(filters).filter(Boolean).length;
+  const fieldsBtnRef = useRef<HTMLButtonElement>(null);
+  const filterBtnRef = useRef<HTMLButtonElement>(null);
 
   return (
     <div className="flex flex-wrap items-center gap-2 px-4 py-3 sm:px-6">
@@ -79,17 +79,11 @@ export function TaskToolbar({
         </Button>
       )}
 
-      <div ref={fieldsAnchorRef}>
-        <Button variant="outline" size="sm" onClick={() => setFieldsOpen((v) => !v)}>
+      <div className="relative">
+        <Button ref={fieldsBtnRef} variant="outline" size="sm" onClick={() => setFieldsOpen((v) => !v)}>
           <Table2 className="h-4 w-4" /> <span className="hidden sm:inline">Fields</span>
         </Button>
-        <Popover
-          open={fieldsOpen}
-          onClose={() => setFieldsOpen(false)}
-          anchorRef={fieldsAnchorRef}
-          align="right"
-          className="min-w-[240px]"
-        >
+        <Popover open={fieldsOpen} onClose={() => setFieldsOpen(false)} anchorRef={fieldsBtnRef} className="min-w-[240px]">
           {showViewSwitch && onViewChange && (
             <div className="mb-1.5 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
               {(['list', 'board'] as const).map((v) => (
@@ -126,12 +120,12 @@ export function TaskToolbar({
         </Popover>
       </div>
 
-      <div ref={filterAnchorRef}>
-        <Button variant="outline" size="sm" onClick={() => setFilterOpen((v) => !v)} aria-label="Filter">
+      <div className="relative">
+        <Button ref={filterBtnRef} variant="outline" size="sm" onClick={() => setFilterOpen((v) => !v)} aria-label="Filter">
           <Filter className="h-4 w-4" />
           {activeFilters > 0 && <span className="text-[11px]">{activeFilters}</span>}
         </Button>
-        <Popover open={filterOpen} onClose={() => setFilterOpen(false)} anchorRef={filterAnchorRef} align="right">
+        <Popover open={filterOpen} onClose={() => setFilterOpen(false)} anchorRef={filterBtnRef}>
           <p className="px-2.5 pb-1 pt-1 text-[11px] text-muted-foreground">Status</p>
           {STATUSES.map((status) => (
             <MenuItem
