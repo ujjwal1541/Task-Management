@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Check, Plus, Send, Trash2 } from 'lucide-react';
@@ -21,6 +21,9 @@ export default function TaskDetailPage() {
   const [statusOpen, setStatusOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
+  const statusBtnRef = useRef<HTMLButtonElement>(null);
+  const priorityBtnRef = useRef<HTMLButtonElement>(null);
+  const assigneeBtnRef = useRef<HTMLButtonElement>(null);
 
   const load = useCallback(async () => {
     try {
@@ -178,10 +181,10 @@ export default function TaskDetailPage() {
           <Card className="space-y-3 p-4">
             <Field label="Status">
               <div className="relative">
-                <button onClick={() => setStatusOpen((v) => !v)} className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] hover:bg-muted">
+                <button ref={statusBtnRef} onClick={() => setStatusOpen((v) => !v)} className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] hover:bg-muted">
                   <StatusDot status={task.status} /> {task.status}
                 </button>
-                <Popover open={statusOpen} onClose={() => setStatusOpen(false)} className="left-0 right-auto">
+                <Popover open={statusOpen} onClose={() => setStatusOpen(false)} anchorRef={statusBtnRef} align="left">
                   {STATUSES.map((status) => (
                     <MenuItem key={status} onClick={async () => { setStatusOpen(false); await patch({ status }); }}>
                       <StatusDot status={status} /> {status}
@@ -193,10 +196,10 @@ export default function TaskDetailPage() {
 
             <Field label="Priority">
               <div className="relative">
-                <button onClick={() => setPriorityOpen((v) => !v)} className="rounded-lg px-2 py-1 hover:bg-muted">
+                <button ref={priorityBtnRef} onClick={() => setPriorityOpen((v) => !v)} className="rounded-lg px-2 py-1 hover:bg-muted">
                   <PriorityBadge priority={task.priority} />
                 </button>
-                <Popover open={priorityOpen} onClose={() => setPriorityOpen(false)} className="left-0 right-auto">
+                <Popover open={priorityOpen} onClose={() => setPriorityOpen(false)} anchorRef={priorityBtnRef} align="left">
                   {PRIORITIES.map((priority) => (
                     <MenuItem key={priority} onClick={async () => { setPriorityOpen(false); await patch({ priority }); }}>
                       <PriorityBadge priority={priority} />
@@ -208,11 +211,11 @@ export default function TaskDetailPage() {
 
             <Field label="Assignee">
               <div className="relative">
-                <button onClick={() => setAssigneeOpen((v) => !v)} className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] hover:bg-muted">
+                <button ref={assigneeBtnRef} onClick={() => setAssigneeOpen((v) => !v)} className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] hover:bg-muted">
                   <Avatar name={task.assignee?.name} url={task.assignee?.avatarUrl} size={20} />
                   {task.assignee?.name ?? 'Unassigned'}
                 </button>
-                <Popover open={assigneeOpen} onClose={() => setAssigneeOpen(false)} className="left-0 right-auto">
+                <Popover open={assigneeOpen} onClose={() => setAssigneeOpen(false)} anchorRef={assigneeBtnRef} align="left">
                   <MenuItem onClick={async () => { setAssigneeOpen(false); await patch({ assigneeId: null }); }}>
                     Unassigned
                   </MenuItem>
