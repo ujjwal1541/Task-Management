@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --background: #ffffff;
+  --surface: #f7f7f8;
+  --card: #ffffff;
+  --foreground: #101828;
+  --muted: #f2f3f5;
+  --muted-foreground: #667085;
+  --border: #e7e8ec;
+  --accent: #111111;
+  --accent-foreground: #ffffff;
+}
+
+.dark {
+  --background: #0d0e11;
+  --surface: #14161a;
+  --card: #171a1f;
+  --foreground: #f4f5f7;
+  --muted: #1f232a;
+  --muted-foreground: #98a2b3;
+  --border: #262b33;
+  --accent: #f4f5f7;
+  --accent-foreground: #101828;
+}
+
+/* Accent color modes (persisted, see ThemeProvider) */
+[data-accent='amber'] { --accent: #f59e0b; --accent-foreground: #1f1300; }
+[data-accent='blue'] { --accent: #6366f1; --accent-foreground: #ffffff; }
+[data-accent='pink'] { --accent: #ec4899; --accent-foreground: #ffffff; }
+[data-accent='rose'] { --accent: #f43f5e; --accent-foreground: #ffffff; }
+[data-accent='emerald'] { --accent: #059669; --accent-foreground: #ffffff; }
+[data-accent='black'] { --accent: #111111; --accent-foreground: #ffffff; }
+.dark[data-accent='black'], .dark [data-accent='black'] { --accent: #f4f5f7; --accent-foreground: #101828; }
+
+* { border-color: var(--border); }
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+.scrollbar-thin::-webkit-scrollbar { height: 8px; width: 8px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+.animate-pop { animation: pop-in .14s ease-out both; }
