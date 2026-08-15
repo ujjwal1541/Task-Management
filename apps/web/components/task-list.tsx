@@ -78,8 +78,8 @@ function TaskRow({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
-  const priorityAnchorRef = useRef<HTMLDivElement>(null);
-  const menuAnchorRef = useRef<HTMLDivElement>(null);
+  const priorityBtnRef = useRef<HTMLButtonElement>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_40px] items-center gap-2 border-t px-4 py-3 text-sm md:grid-cols-[minmax(0,1fr)_130px_110px_140px_60px]">
@@ -102,11 +102,11 @@ function TaskRow({
         )}
       </div>
 
-      <div ref={priorityAnchorRef} className={cn('hidden md:block', !fields.priority && 'md:invisible')}>
-        <button onClick={() => setPriorityOpen((v) => !v)} className="rounded-md px-1 py-0.5 hover:bg-muted">
+      <div className={cn('relative hidden md:block', !fields.priority && 'md:invisible')}>
+        <button ref={priorityBtnRef} onClick={() => setPriorityOpen((v) => !v)} className="rounded-md px-1 py-0.5 hover:bg-muted">
           <PriorityBadge priority={task.priority} />
         </button>
-        <Popover open={priorityOpen} onClose={() => setPriorityOpen(false)} anchorRef={priorityAnchorRef} align="left">
+        <Popover open={priorityOpen} onClose={() => setPriorityOpen(false)} anchorRef={priorityBtnRef} align="left">
           <p className="px-2.5 pb-1 text-[11px] text-muted-foreground">Priority</p>
           {PRIORITIES.map((priority) => (
             <MenuItem
@@ -130,11 +130,11 @@ function TaskRow({
         {formatDate(task.dueDate)}
       </span>
 
-      <div ref={menuAnchorRef} className="justify-self-end">
-        <button onClick={() => setMenuOpen((v) => !v)} className="rounded-md p-1.5 hover:bg-muted" aria-label="Task actions">
+      <div className="relative justify-self-end">
+        <button ref={menuBtnRef} onClick={() => setMenuOpen((v) => !v)} className="rounded-md p-1.5 hover:bg-muted" aria-label="Task actions">
           <MoreHorizontal className="h-4 w-4" />
         </button>
-        <Popover open={menuOpen} onClose={() => setMenuOpen(false)} anchorRef={menuAnchorRef} align="right">
+        <Popover open={menuOpen} onClose={() => setMenuOpen(false)} anchorRef={menuBtnRef}>
           <p className="px-2.5 pb-1 text-[11px] text-muted-foreground">Move to</p>
           {STATUSES.filter((s) => s !== task.status).map((status) => (
             <MenuItem
