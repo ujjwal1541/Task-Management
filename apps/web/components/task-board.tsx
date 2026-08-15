@@ -116,13 +116,13 @@ function CardMenu({
   onDelete: (id: string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
-  const anchorRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   return (
-    <div ref={anchorRef}>
-      <button onClick={() => setOpen((v) => !v)} className="rounded-md p-1 opacity-0 hover:bg-muted group-hover:opacity-100" aria-label="Card actions">
+    <div className="relative">
+      <button ref={btnRef} onClick={() => setOpen((v) => !v)} className="rounded-md p-1 opacity-0 hover:bg-muted group-hover:opacity-100" aria-label="Card actions">
         <MoreHorizontal className="h-4 w-4" />
       </button>
-      <Popover open={open} onClose={() => setOpen(false)} anchorRef={anchorRef} align="right">
+      <Popover open={open} onClose={() => setOpen(false)} anchorRef={btnRef}>
         <p className="px-2.5 pb-1 text-[11px] text-muted-foreground">Move to</p>
         {STATUSES.filter((s) => s !== task.status).map((status) => (
           <MenuItem
