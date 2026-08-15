@@ -11,7 +11,8 @@
     "skipLibCheck": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    "sourceMap": true
+    "sourceMap": true,
+    "rootDir": "src"
   },
-  "include": ["src/**/*", "prisma/**/*"]
+  "include": ["src/**/*"]
 }
