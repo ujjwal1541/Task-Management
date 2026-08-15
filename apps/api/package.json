@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "nest start --watch",
-    "build": "nest build",
+    "postinstall": "prisma generate",
++    "build": "prisma generate && nest build",
     "start:prod": "node dist/main.js",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
