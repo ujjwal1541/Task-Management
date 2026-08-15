@@ -1,75 +1,153 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Triangle } from 'lucide-react';
-import { Button, Card } from '@/components/ui';
-import { useAuth } from '@/components/auth-provider';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { api } from '@/lib/api';
+import { PRIORITIES, type Project } from '@/lib/types';
+import { Avatar, MenuItem, Popover } from '@/components/ui';
+import { PriorityBadge } from '@/components/badges';
+import { TaskToolbar, type FieldKey, type Filters } from '@/components/task-toolbar';
+import { formatDate } from '@/lib/utils';
 
-export default function LoginPage() {
-  const { user, loading, loginAsGuest } = useAuth();
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const FIELDS: Record<FieldKey, boolean> = {
+  priority: true,
+  members: true,
+  dueDate: true,
+  labels: false,
+  status: false,
+  reporter: false,
+};
+
+export default function ProjectsPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [fields, setFields] = useState(FIELDS);
+  const [filters, setFilters] = useState<Filters>({});
+
+  const load = useCallback(async () => {
+    try {
+      setProjects(await api.projects());
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!loading && user) router.replace('/tasks');
-  }, [loading, user, router]);
+    void load();
+  }, [load]);
 
-  async function guest() {
-    setBusy(true);
-    setError(null);
-    try {
-      await loginAsGuest();
-    } catch {
-      setError('Could not reach the API. Make sure the NestJS server is running on port 4000.');
-    } finally {
-      setBusy(false);
-    }
-  }
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return projects.filter((p) => {
+      if (q && !p.name.toLowerCase().includes(q)) return false;
+      if (filters.priority && p.priority !== filters.priority) return false;
+      return true;
+    });
+  }, [projects, search, filters]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4">
-      <div className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-          <Triangle className="h-3.5 w-3.5" />
-        </span>
-        <span className="text-[15px] font-semibold">Pyramid</span>
+    <div>
+      <TaskToolbar
+        title="Projects"
+        search={search}
+        onSearch={setSearch}
+        fields={fields}
+        onFieldsChange={setFields}
+        filters={filters}
+        onFiltersChange={setFilters}
+        showViewSwitch={false}
+        addLabel="Add Project"
+        onAdd={async () => {
+          const project = await api.createProject({ name: 'New project' });
+          setProjects((prev) => [...prev, project]);
+        }}
+      />
+
+      <div className="px-4 pb-16 sm:px-6">
+        {loading ? (
+          <p className="py-10 text-sm text-muted-foreground">Loading projects…</p>
+        ) : (
+          <div className="overflow-hidden rounded-xl border bg-card">
+            <div className="hidden bg-muted/70 px-4 py-2.5 text-xs font-medium text-muted-foreground md:grid md:grid-cols-[minmax(0,1fr)_120px_130px_110px_140px_60px]">
+              <span>Project</span>
+              <span>Tasks</span>
+              <span>Priority</span>
+              <span>Lead</span>
+              <span>Due Date</span>
+              <span className="text-right">Actions</span>
+            </div>
+            {visible.map((project) => (
+              <Row
+                key={project.id}
+                project={project}
+                fields={fields}
+                onUpdate={async (patch) => {
+                  const updated = await api.updateProject(project.id, patch);
+                  setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, ...updated } : p)));
+                }}
+                onDelete={async () => {
+                  await api.deleteProject(project.id);
+                  setProjects((prev) => prev.filter((p) => p.id !== project.id));
+                }}
+              />
+            ))}
+            {!visible.length && <p className="px-4 py-6 text-[13px] text-muted-foreground">No projects found.</p>}
+          </div>
+        )}
       </div>
-
-      <Card className="w-full max-w-[400px] p-6">
-        <h1 className="text-center text-xl font-semibold tracking-tight">Let&apos;s get back on track</h1>
-        <p className="mt-1 text-center text-[13px] text-muted-foreground">
-          Enter your email below to login to your account.
-        </p>
-
-        <div className="mt-5 space-y-2.5">
-          <Button size="lg" className="rounded-full" onClick={guest} disabled={busy}>
-            {busy ? 'Signing in…' : 'Continue as Guest'}
-          </Button>
-          <Button size="lg" variant="outline" className="rounded-full" disabled title="Not part of this assessment scope">
-            <GoogleIcon /> Login with Google
-          </Button>
-        </div>
-
-        {error && <p className="mt-3 text-center text-[12px] text-red-500">{error}</p>}
-      </Card>
-
-      <p className="max-w-[320px] text-center text-[12px] leading-5 text-muted-foreground">
-        By clicking continue, you agree to our <span className="underline">Terms of Service</span> and{' '}
-        <span className="underline">Privacy Policy</span>
-      </p>
-    </main>
+    </div>
   );
 }
 
-function GoogleIcon() {
+function Row({
+  project,
+  fields,
+  onUpdate,
+  onDelete,
+}: {
+  project: Project;
+  fields: Record<FieldKey, boolean>;
+  onUpdate: (patch: Record<string, unknown>) => Promise<void>;
+  onDelete: () => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [priorityOpen, setPriorityOpen] = useState(false);
+  const priorityBtnRef = useRef<HTMLButtonElement>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
-      <path fill="#4285F4" d="M23 12.2c0-.8-.1-1.6-.2-2.3H12v4.4h6.2A5.3 5.3 0 0 1 15.8 18v3h4.1c2.4-2.2 3.1-5.4 3.1-8.8Z" />
-      <path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-4.1-3c-1.1.7-2.5 1.2-3.8 1.2-3 0-5.6-2-6.5-4.8H1.3v3.1A12 12 0 0 0 12 24Z" />
-      <path fill="#FBBC05" d="M5.5 14.5A7.2 7.2 0 0 1 5.5 9.5V6.4H1.3a12 12 0 0 0 0 11.2l4.2-3.1Z" />
-      <path fill="#EA4335" d="M12 4.8c1.7 0 3.3.6 4.5 1.8l3.6-3.6A12 12 0 0 0 1.3 6.4l4.2 3.1C6.4 6.7 9 4.8 12 4.8Z" />
-    </svg>
+    <div className="grid grid-cols-[minmax(0,1fr)_40px] items-center gap-2 border-t px-4 py-3 text-sm md:grid-cols-[minmax(0,1fr)_120px_130px_110px_140px_60px]">
+      <span className="truncate font-medium">{project.name}</span>
+      <span className="hidden text-[13px] text-muted-foreground md:block">{project._count?.tasks ?? 0} tasks</span>
+      <div className={`relative hidden md:block ${fields.priority ? '' : 'md:invisible'}`}>
+        <button ref={priorityBtnRef} onClick={() => setPriorityOpen((v) => !v)} className="rounded-md px-1 py-0.5 hover:bg-muted">
+          <PriorityBadge priority={project.priority} />
+        </button>
+        <Popover open={priorityOpen} onClose={() => setPriorityOpen(false)} anchorRef={priorityBtnRef} align="left">
+          {PRIORITIES.map((priority) => (
+            <MenuItem key={priority} onClick={async () => { setPriorityOpen(false); await onUpdate({ priority }); }}>
+              <PriorityBadge priority={priority} />
+            </MenuItem>
+          ))}
+        </Popover>
+      </div>
+      <div className={`hidden md:block ${fields.members ? '' : 'md:invisible'}`}>
+        <Avatar name={project.lead?.name} url={project.lead?.avatarUrl} size={24} />
+      </div>
+      <span className={`hidden text-[13px] text-muted-foreground md:block ${fields.dueDate ? '' : 'md:invisible'}`}>
+        {formatDate(project.dueDate)}
+      </span>
+      <div className="relative justify-self-end">
+        <button ref={menuBtnRef} onClick={() => setOpen((v) => !v)} className="rounded-md p-1.5 hover:bg-muted" aria-label="Project actions">
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+        <Popover open={open} onClose={() => setOpen(false)} anchorRef={menuBtnRef}>
+          <MenuItem className="text-red-500" onClick={async () => { setOpen(false); await onDelete(); }}>
+            <Trash2 className="h-4 w-4" /> Delete project
+          </MenuItem>
+        </Popover>
+      </div>
+    </div>
   );
 }
